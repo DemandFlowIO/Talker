@@ -3,18 +3,46 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useCallback } from 'react';
-import { InteractionMode, SemanticState, Meaning } from '../types';
+import { useState, useCallback, useEffect } from 'react';
+import { InteractionMode, SemanticState, Meaning, AccessibilitySettings } from '../types';
 import { MEANINGS, MODE_CONFIGS, SUBTREES } from '../constants';
 import { smoothPhrase } from '../utils';
 
 export function useCommunication(initialMode: InteractionMode = 'guided') {
-  const [state, setState] = useState<SemanticState>({
-    currentPhrase: [],
-    mode: initialMode,
-    currentNodeId: 'root',
-    history: ['root'],
+  const [state, setState] = useState<SemanticState>(() => {
+    const saved = localStorage.getItem('lumina_settings');
+    const defaultSettings = {
+      hapticsEnabled: true,
+      holdToActivateDelay: 0,
+      highContrast: false,
+      stealthMode: false,
+      voicePitch: 1.0,
+      voiceRate: 1.0
+    };
+
+    return {
+      currentPhrase: [],
+      mode: initialMode,
+      currentNodeId: 'root',
+      history: ['root'],
+      currentTone: 'polite',
+      isNegated: false,
+      isQuestion: false,
+      tense: 'present',
+      settings: saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings
+    };
   });
+
+  // Persist settings when they change (Point 53)
+  useEffect(() => {
+    localStorage.setItem('lumina_settings', JSON.stringify(state.settings));
+  }, [state.settings]);
+
+  const vibrate = useCallback((pattern: number | number[] = 10) => {
+    if (state.settings.hapticsEnabled && 'vibrate' in navigator) {
+      navigator.vibrate(pattern);
+    }
+  }, [state.settings.hapticsEnabled]);
 
   const setMode = useCallback((mode: InteractionMode) => {
     setState(prev => ({
@@ -23,37 +51,138 @@ export function useCommunication(initialMode: InteractionMode = 'guided') {
       currentPhrase: [],
       currentNodeId: 'root',
       history: ['root'],
+      currentTone: 'polite',
+      isNegated: false,
+      isQuestion: false,
+      tense: 'present'
     }));
+  }, []);
+
+  const speakInternal = useCallback((text: string, tone: string = 'polite') => {
+    let toSpeak = text;
+    if (!toSpeak) return;
+
+    // Apply tone modifiers to text
+    if (tone === 'urgent') {
+      toSpeak = "Urgent: " + toSpeak;
+    } else if (tone === 'angry') {
+      toSpeak = "Listen carefully: " + toSpeak;
+    } else if (tone === 'polite') {
+      if (!toSpeak.toLowerCase().includes('please')) {
+        toSpeak = toSpeak + " please.";
+      }
+    }
+
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(toSpeak);
+      
+      if (tone === 'urgent') {
+        utterance.rate = 1.3;
+        utterance.pitch = 1.2;
+      } else if (tone === 'angry') {
+        utterance.rate = 0.8;
+        utterance.pitch = 0.7;
+      } else {
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+      }
+
+      window.speechSynthesis.speak(utterance);
+    }
   }, []);
 
   const selectMeaning = useCallback((meaningId: string) => {
     const meaning = MEANINGS[meaningId];
     if (!meaning) return;
 
+    vibrate(15);
+
+    // Sentiment Analysis (Point 19) - Repeated selection escalates to urgent
+    const lastMeaningId = state.currentPhrase.length > 0 ? state.currentPhrase[state.currentPhrase.length - 1].id : null;
+    const isRepeat = lastMeaningId === meaningId;
+
+    // Handle Tone Modifiers (Point 76)
+    if (meaningId.startsWith('t_')) {
+      const tone = meaningId.split('_')[1] as any;
+      setState(prev => ({ ...prev, currentTone: tone }));
+      return;
+    }
+
+    // Handle Negation Modifier (Point 28)
+    if (meaningId === 'm_not') {
+      setState(prev => ({ ...prev, isNegated: !prev.isNegated }));
+      return;
+    }
+
+    // Handle Tense Modifiers (Point 17)
+    if (meaningId === 'm_past') {
+      setState(prev => ({ ...prev, tense: prev.tense === 'past' ? 'present' : 'past' }));
+      return;
+    }
+    if (meaningId === 'm_present') {
+      setState(prev => ({ ...prev, tense: 'present' }));
+      return;
+    }
+    if (meaningId === 'm_future') {
+      setState(prev => ({ ...prev, tense: prev.tense === 'future' ? 'present' : 'future' }));
+      return;
+    }
+
+    // Handle Question Modifier (Point 29)
+    if (meaningId === 'm_question') {
+      setState(prev => ({ ...prev, isQuestion: !prev.isQuestion }));
+      return;
+    }
+
+    // Handle Non-Verbal Sounds (Point 78) - Immediate Trigger
+    if (meaningId.startsWith('fx_')) {
+      speakInternal(meaning.output, 'polite');
+      return;
+    }
+
     setState(prev => {
+      let finalMeaning = meaning;
+      
+      // If negated, wrap the meaning (simplified version)
+      if (prev.isNegated) {
+        finalMeaning = {
+          ...meaning,
+          label: `NOT ${meaning.label}`,
+          output: `not ${meaning.output.toLowerCase()}`
+        };
+      }
+
+      // Automatically escalate tone if repeated (Point 19)
+      const isEscalation = isRepeat && meaning.category !== 'scaffold';
+      const tone = isEscalation ? 'urgent' : prev.currentTone;
+
       // In essential mode, we reset phrase on every tap to ensure it's a one-tap direct output
-      const nextPhrase = prev.mode === 'essential' ? [meaning] : [...prev.currentPhrase, meaning];
+      const nextPhrase = prev.mode === 'essential' ? [finalMeaning] : [...prev.currentPhrase, finalMeaning];
       
       // Check if this meaning opens a subtree
-      // Essential mode should NOT branch; it should treat everything as direct output
-      const hasSubtree = !!SUBTREES[meaningId] && prev.mode !== 'essential';
+      const hasSubtree = !!SUBTREES[meaningId] && prev.mode !== 'essential' && !prev.isNegated;
       
       if (hasSubtree) {
         return {
           ...prev,
           currentPhrase: nextPhrase,
           currentNodeId: meaningId,
-          history: [...prev.history, meaningId]
+          history: [...prev.history, meaningId],
+          isNegated: false,
+          currentTone: tone
         };
       } else {
         // It's a leaf node or we are in Essential mode
         return {
           ...prev,
           currentPhrase: nextPhrase,
+          isNegated: false,
+          currentTone: tone
         };
       }
     });
-  }, []);
+  }, [speakInternal]);
 
   const navigateBack = useCallback(() => {
     setState(prev => {
@@ -69,7 +198,8 @@ export function useCommunication(initialMode: InteractionMode = 'guided') {
         ...prev,
         history: newHistory,
         currentNodeId: prevNodeId,
-        currentPhrase: newPhrase
+        currentPhrase: newPhrase,
+        isNegated: false
       };
     });
   }, []);
@@ -79,14 +209,16 @@ export function useCommunication(initialMode: InteractionMode = 'guided') {
       ...prev,
       currentPhrase: [],
       currentNodeId: 'root',
-      history: ['root']
+      history: ['root'],
+      isNegated: false
     }));
   }, []);
 
   const clearPhrase = useCallback(() => {
     setState(prev => ({
       ...prev,
-      currentPhrase: []
+      currentPhrase: [],
+      isNegated: false
     }));
   }, []);
 
@@ -98,18 +230,16 @@ export function useCommunication(initialMode: InteractionMode = 'guided') {
   }, [state.mode, state.currentNodeId]);
 
   const speak = useCallback((text?: string) => {
-    const toSpeak = text || smoothPhrase(state.currentPhrase);
-    if (!toSpeak) return;
+    const toSpeak = text || smoothPhrase(state.currentPhrase, {
+      tense: state.tense,
+      isQuestion: state.isQuestion
+    });
+    speakInternal(toSpeak, state.currentTone);
+  }, [state.currentPhrase, state.currentTone, state.tense, state.isQuestion, speakInternal]);
 
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(toSpeak);
-      window.speechSynthesis.speak(utterance);
-    }
-    
-    // Clear phrase after speaking if it was a manual speak action (optional, depends on UX)
-    // For now, let's keep it so user can see what they said.
-  }, [state.currentPhrase]);
+  const updateSettings = useCallback((newSettings: AccessibilitySettings) => {
+    setState(prev => ({ ...prev, settings: newSettings }));
+  }, []);
 
   return {
     state,
@@ -118,8 +248,12 @@ export function useCommunication(initialMode: InteractionMode = 'guided') {
     reset,
     clearPhrase,
     setMode,
+    updateSettings,
     currentMeanings: getCurrentMeanings(),
     speak,
-    smoothedText: smoothPhrase(state.currentPhrase)
+    smoothedText: smoothPhrase(state.currentPhrase, {
+      tense: state.tense,
+      isQuestion: state.isQuestion
+    })
   };
 }

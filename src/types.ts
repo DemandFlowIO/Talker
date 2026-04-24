@@ -5,16 +5,18 @@
 
 import { LucideIcon } from 'lucide-react';
 
-export type InteractionMode = 'essential' | 'guided' | 'express';
+export type InteractionMode = 'essential' | 'guided' | 'express' | 'vulgar' | 'social' | 'hospital' | 'retail' | 'crisis';
 
 export type SemanticRole = 'direct' | 'scaffold' | 'modifier' | 'navigation';
+
+export type SemanticCategory = 'noun' | 'verb' | 'adjective' | 'social' | 'modifier' | 'essential' | 'scaffold' | 'quantity';
 
 export interface Meaning {
   id: string;
   label: string;
   icon: string; // Lucide icon name
   output: string; // Solo output phrase
-  category?: string;
+  category?: SemanticCategory;
   isUrgent?: boolean;
 }
 
@@ -25,11 +27,25 @@ export interface NavigationNode {
   title?: string;
 }
 
+export interface AccessibilitySettings {
+  hapticsEnabled: boolean;
+  holdToActivateDelay: number; // 0 = immediate, > 0 = ms delay
+  highContrast: boolean;
+  stealthMode: boolean;
+  voicePitch: number;
+  voiceRate: number;
+}
+
 export interface SemanticState {
   currentPhrase: Meaning[];
   mode: InteractionMode;
   currentNodeId: string;
   history: string[];
+  currentTone?: 'polite' | 'urgent' | 'angry';
+  isNegated?: boolean;
+  isQuestion?: boolean;
+  tense?: 'present' | 'past' | 'future';
+  settings: AccessibilitySettings;
 }
 
 export interface FirestoreErrorInfo {
