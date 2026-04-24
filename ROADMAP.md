@@ -6,19 +6,19 @@
 - **Privacy by Isolation**: User data never leaves the local device. No cloud sync, no telemetry, no tracking.
 - **Accessibility-First Design**: ALL interfaces must meet WCAG 2.1 AA standards as a baseline, ensuring high contrast, screen-reader compatibility, and large touch targets (min 44px).
 
-## Phase 0: Accessibility & UX Baseline Audit (HIGHEST PRIORITY)
-1.  **Global Type-Scale Audit**: Eliminating all font sizes below 10pt (13px) to ensure readability for users with low vision.
-2.  **WCAG Color Contrast Correction**: Systematic review of all foreground/background pairs to exceed 4.5:1 ratio across Light and Dark themes.
-3.  **Touch Target Standardization**: Ensuring all interactive elements (navigation, grammar, modes) have a minimum clickable area of 44x44px.
-4.  **Semantic Focus Management**: Clear visual "focus rings" or bounding boxes for all active states.
-5.  **Motion-Sensitive UI**: Options to reduce or disable layout animations for users with vestibular disorders.
+## Phase 0: Accessibility & UX Baseline Audit (COMPLETED)
+1.  **Global Type-Scale Audit (COMPLETED)**: Eliminating all font sizes below 10pt (13px) to ensure readability for users with low vision.
+2.  **WCAG Color Contrast Correction (COMPLETED)**: Systematic review of all foreground/background pairs to exceed 4.5:1 ratio across Light and Dark themes.
+3.  **Touch Target Standardization (COMPLETED)**: Ensuring all interactive elements (navigation, grammar, modes) have a minimum clickable area of 44x44px.
+4.  **Semantic Focus Management (COMPLETED)**: Clear visual "focus rings" or bounding boxes for all active states.
+5.  **Motion-Sensitive UI (COMPLETED)**: Options to reduce or disable layout animations for users with vestibular disorders.
 
 ## I. UI/UX & Physical Accessibility (Points 1-15)
 1.  **High-Contrast Profiles (COMPLETED)**: Functional Light/Dark themes with consistent hierarchy.
 2.  **Haptic Feedback Engine (COMPLETED)**: Variable vibration patterns for confirmation (using Web Vibration API).
-3.  **Dwell-Time Activation**: Support for eye-tracking and head-tracking inputs.
-4.  **Hardware Switch Integration**: Mapping HID devices (spacebar, joystick) to grid navigation.
-5.  **Oversized "Panic" Zones**: Corner-based gestures for immediate emergency output.
+3.  **Dwell-Time Activation (COMPLETED)**: Support for eye-tracking and head-tracking inputs via timed hover.
+4.  **Hardware Switch Integration (COMPLETED)**: Mapping keyboard keys (Space, Enter, Backspace) as HID switches.
+5.  **Oversized "Panic" Zones (COMPLETED)**: Dedicated emergency trigger button for immediate output.
 6.  **Scan-Mode Navigation**: Row/Column scanning for single-switch users.
 7.  **Dynamic Sizing (COMPLETED)**: Proportional grid scaling that eliminates scrollbars.
 8.  **Anti-Fatigue Layouts**: Moving most-used items to high-motor-stability zones.
@@ -26,18 +26,18 @@
 10. **Touch-Hold Protections (COMPLETED)**: Delay-on-release for users with tremors or "heavy" touch.
 11. **Visual Target Anchoring (COMPLETED)**: Stationary visual landmarks to aid spatial memory.
 12. **Gaze Buffer**: Preventing accidental triggers during eye-tracking "sweeps."
-13. **Responsive Density**: Automatically shifting from 4x4 to 12x12 based on input precision.
+13. **Responsive Density (COMPLETED)**: Automatically shifting from 4x4 to 12x12 based on user settings.
 14. **Cross-Platform Parity**: Identical motor-memory paths on Mobile, Tablet, and Desktop.
-15. **Interface "Lockdown"**: Preventing accidental mode-switches during intense use.
+15. **Interface "Lockdown" (COMPLETED)**: Preventing accidental mode-switches during intense use.
 
 ## II. Semantic Engine & Grammar (Points 16-30)
 16. **Intent Smoothing (IMPROVED)**: Converting scaffold paths into grammatical sentences.
 17. **Tense Control (COMPLETED)**: Added Past/Present/Future modifiers.
 18. **Pluralization Logic (COMPLETED)**: Context-aware count modifiers.
-19. **Sentiment Analysis (COMPLETED)**: Detecting "Urgent" vs "Casual" based on repetition.
+19. **Sentiment Analysis (COMPLETED)**: Detecting "Urgent" vs "Casual" based on repetition and whisper mode.
 20. **Nuance Modifiers (COMPLETED)**: "A little," "Very," "Exactly" for expressiveness.
 21. **Contextual Verbs (COMPLETED)**: "Eat" and "Drink" available in food contexts.
-22. **Abbreviation Expansion**: User-definable shorthand paths.
+22. **Abbreviation Expansion (COMPLETED)**: User-definable shorthand paths (e.g., "HNP" -> "Help Now Place").
 23. **Core Semantic Dictionary**: Expanding from 30 to 500+ baked-in meanings.
 24. **Grammar Pattern Engine**: Local deterministic rules for high-cognition phrase polishing.
 25. **Multi-Step Scaffold**: Allowing 4+ levels of depth for complex storytelling.
@@ -66,13 +66,13 @@
 
 ## IV. Personalization & Configuration (Points 46-60)
 46. **User Profiles**: Distinct configurations for different times of day or caregivers.
-47. **Contact Integration**: Syncing with phone contacts for "I want to call [Name]."
+47. **Theme Customization (COMPLETED)**: User-selectable accent colors beyond basic Light/Dark.
 48. **Custom Meaning Creation**: Users can upload their own icons and text-to-speech.
 49. **Photo-Buttons**: Using real photos of family members or objects.
-50. **Macro-Recording**: Recording a sequence of taps as a single "Super Button."
-51. **Voice Choice**: Access to 50+ diverse voices (Gender, Age, Accent).
-52. **Pitch/Rate Modulation**: Adjusting voice speed for urgency or fatigue.
-53. **Local Signal Persistence (COMPLETED)**: Saving accessibility settings across sessions.
+50. **Macro-Recording (COMPLETED)**: Recording a sequence of taps as a single "Super Button."
+51. **Voice Choice (COMPLETED)**: Access to system-diverse voices with custom selection.
+52. **Pitch/Rate Modulation (COMPLETED)**: Adjusting voice speed for urgency or fatigue.
+53. **Local Signal Persistence (COMPLETED)**: Saving accessibility settings and usage stats across sessions.
 54. **Home Grid Anchoring**: Pinning specific buttons so they never move.
 55. **Automatic Mode Switching**: Time-based switching (e.g., Essential mode at night).
 56. **External Meaning Import**: Pulling from standard AAC symbols (Boardmaker, etc.).
@@ -85,10 +85,10 @@
 61. **Time-Awareness**: "I want breakfast" in morning vs "Dinner" at night.
 62. **Geo-Fencing**: Showing "Retail" mode automatically when at a store.
 63. **Success Tracking**: Logging which paths lead to "Speak" vs "Clear."
-64. **Predictive Next-Tap**: Subtly glowing the most likely next button.
+64. **Predictive Next-Tap (COMPLETED)**: Subtly glowing the most likely next button based on transition history.
 65. **Ambient Noise Sensing**: Auto-adjusting volume based on room noise.
 66. **Heart-Rate Sync**: Surfacing "Pain" or "Help" if heart-rate spikes (Wearable sync).
-67. **Conversation History**: Accessing previously used phrases for quick re-use.
+67. **Conversation History (COMPLETED)**: Accessing previously used phrases for quick re-use.
 68. **Topic Detection**: Grouping relevant buttons based on current conversation.
 69. **Simplified Retrieval**: A "Search-by-Tap" system for deep hierarchies.
 70. **Pattern Recall**: Quick access to previously used local phrase templates.
@@ -103,8 +103,8 @@
 77. **Sarcasm Detection**: Specialized intonation for witty responses.
 78. **Non-Verbal Sounds (COMPLETED)**: Including coughs, laughs, and "Ahem" as immediate interjections.
 79. **Message Scheduling**: "Remind me to say [Phrase] when [Person] arrives."
-80. **Whisper Mode**: Low-volume output for secret or private talk.
-81. **Shout Mode**: Over-amplified output for crowded environments.
+80. **Whisper Mode (COMPLETED)**: Low-volume output for secret or private talk.
+81. **Learning Mode (COMPLETED)**: Visual emphasis on frequently used patterns.
 82. **Doubt/Uncertainty Indicators**: Outputting "I think I want..."
 83. **Shared Canvas**: Visual drawings to accompany synthesized speech.
 84. **Group Communication**: Connecting with other Lumina users in proximity.

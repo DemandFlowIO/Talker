@@ -10,13 +10,18 @@ import { Meaning } from '../types';
 
 interface SemanticButtonProps {
   meaning: Meaning;
-  onClick: () => void;
+  onClick: (id: string) => void;
   variant?: 'primary' | 'urgent' | 'scaffold' | 'modifier';
   className?: string;
   disabled?: boolean;
   active?: boolean;
   darkMode?: boolean;
   holdDelay?: number;
+  dwellTime?: number;
+  isHot?: boolean;
+  isPredicted?: boolean;
+  isLearningMode?: boolean;
+  accentColor?: string;
 }
 
 export const SemanticButton: React.FC<SemanticButtonProps> = ({ 
@@ -27,13 +32,43 @@ export const SemanticButton: React.FC<SemanticButtonProps> = ({
   disabled = false,
   active = false,
   darkMode = true,
-  holdDelay = 0
+  holdDelay = 0,
+  dwellTime = 0,
+  isHot = false,
+  isPredicted = false,
+  isLearningMode = false,
+  accentColor = '#f97316'
 }) => {
   const IconComponent = (Icons as any)[meaning.icon] || Icons.HelpCircle;
   const [isHolding, setIsHolding] = useState(false);
+  const [isDwelling, setIsDwelling] = useState(false);
+  const [dwellProgress, setDwellProgress] = useState(0);
   const [holdProgress, setHoldProgress] = useState(0);
   const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const dwellTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Dwell-Time Logic (Point 3)
+  useEffect(() => {
+    if (isDwelling && dwellTime > 0) {
+      const startTime = Date.now();
+      const interval = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min((elapsed / dwellTime) * 100, 100);
+        setDwellProgress(progress);
+        
+        if (elapsed >= dwellTime) {
+          clearInterval(interval);
+          setDwellProgress(0);
+          setIsDwelling(false);
+          onClick(meaning.id);
+        }
+      }, 20);
+      
+      return () => clearInterval(interval);
+    } else {
+      setDwellProgress(0);
+    }
+  }, [isDwelling, dwellTime, meaning.id, onClick]);
   useEffect(() => {
     if (isHolding && holdDelay > 0) {
       const startTime = Date.now();
@@ -52,6 +87,16 @@ export const SemanticButton: React.FC<SemanticButtonProps> = ({
     }
   }, [isHolding, holdDelay]);
 
+  const handlePointerEnter = () => {
+    if (disabled || dwellTime <= 0) return;
+    setIsDwelling(true);
+  };
+
+  const handlePointerLeave = () => {
+    setIsDwelling(false);
+    setIsHolding(false);
+  };
+
   const handlePointerDown = (e: React.PointerEvent) => {
     if (disabled) return;
     if (holdDelay > 0) {
@@ -65,7 +110,7 @@ export const SemanticButton: React.FC<SemanticButtonProps> = ({
 
   const handleTrigger = () => {
     setIsHolding(false);
-    onClick();
+    onClick(meaning.id);
   };
 
   const handleClick = (e: React.MouseEvent) => {
@@ -73,7 +118,7 @@ export const SemanticButton: React.FC<SemanticButtonProps> = ({
       e.preventDefault();
       return;
     }
-    onClick();
+    onClick(meaning.id);
   };
 
   const getVariantStyles = () => {
@@ -137,17 +182,63 @@ export const SemanticButton: React.FC<SemanticButtonProps> = ({
       onClick={disabled ? undefined : handleClick}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
-      onPointerLeave={handlePointerUp}
+      onPointerEnter={handlePointerEnter}
+      onPointerLeave={handlePointerLeave}
+      onPointerCancel={handlePointerLeave}
       className={`
         flex flex-col items-center justify-center p-2 sm:p-3 rounded-[32px] border-2 transition-all cursor-pointer
         h-full w-full relative group min-h-0
         ${getVariantStyles()}
         ${disabled ? 'opacity-30 cursor-not-allowed grayscale shadow-none translate-y-2' : ''}
+        ${isLearningMode && isHot && !disabled ? 'ring-4' : ''}
+        ${isPredicted && !disabled ? 'ring-2' : ''}
         ${className}
       `}
+      style={{
+        ...(isLearningMode && isHot ? { borderColor: accentColor, boxShadow: `0 0 15px ${accentColor}44` } : {}),
+        ...(isPredicted && !disabled ? { borderColor: accentColor, boxShadow: `0 0 25px ${accentColor}66` } : {})
+      }}
       id={`button-${meaning.id}`}
     >
       {/* Hold Progress Overlay */}
+      {isHot && isLearningMode && !disabled && (
+        <motion.div 
+          animate={{ opacity: [0.1, 0.4, 0.1] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          style={{ backgroundColor: accentColor }}
+          className="absolute inset-x-4 top-2 h-1 rounded-full z-20"
+        />
+      )}
+
+      {/* Dwell Progress Overlay */}
+      {isDwelling && dwellTime > 0 && (
+        <div className="absolute inset-0 z-10 pointer-events-none flex items-center justify-center">
+          <svg className="w-16 h-16 transform -rotate-90">
+            <circle
+              cx="32"
+              cy="32"
+              r="28"
+              stroke="currentColor"
+              strokeWidth="4"
+              fill="transparent"
+              className="text-white/20"
+            />
+            <motion.circle
+              cx="32"
+              cy="32"
+              r="28"
+              stroke="currentColor"
+              strokeWidth="4"
+              fill="transparent"
+              strokeDasharray={176}
+              initial={{ strokeDashoffset: 176 }}
+              animate={{ strokeDashoffset: 176 - (176 * dwellProgress) / 100 }}
+              className="text-white"
+            />
+          </svg>
+        </div>
+      )}
+
       {isHolding && holdDelay > 0 && (
         <div className="absolute inset-0 z-0 overflow-hidden rounded-[32px]">
           <motion.div 

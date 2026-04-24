@@ -34,6 +34,27 @@ export interface AccessibilitySettings {
   stealthMode: boolean;
   voicePitch: number;
   voiceRate: number;
+  voiceURI: string;
+  gridDensity: 'sparse' | 'standard' | 'compact';
+  learningMode: boolean;
+  isLocked: boolean;
+  dwellTime: number; // 0 means disabled, otherwise ms
+  accentColor: string;
+  whisperMode: boolean;
+  showPanicButton: boolean;
+}
+
+export interface Macro {
+  id: string;
+  label: string;
+  output: string;
+  meanings: Meaning[];
+}
+
+export interface Abbreviation {
+  id: string;
+  short: string; // e.g. "hnp"
+  meaningIds: string[]; // e.g. ["help", "now", "place"]
 }
 
 export interface SemanticState {
@@ -46,6 +67,11 @@ export interface SemanticState {
   isQuestion?: boolean;
   tense?: 'present' | 'past' | 'future';
   settings: AccessibilitySettings;
+  usageStats: Record<string, number>;
+  transitionStats: Record<string, number>; // Key: "fromId->toId"
+  macros: Macro[];
+  phraseHistory: string[];
+  abbreviations: Abbreviation[];
 }
 
 export interface FirestoreErrorInfo {

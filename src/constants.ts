@@ -98,6 +98,22 @@ export const MEANINGS: Record<string, Meaning> = {
   'q_many': { id: 'q_many', label: 'Many', icon: 'LayoutGrid', output: 'many', category: 'quantity' },
   'food_eat': { id: 'food_eat', label: 'Eat', icon: 'UtensilsCrossed', output: 'I want to eat.', category: 'verb' },
   'food_drink': { id: 'food_drink', label: 'Drink', icon: 'GlassWater', output: 'I want a drink.', category: 'verb' },
+  'm_panic': { id: 'm_panic', label: 'PANIC', icon: 'Siren', output: 'EMERGENCY! I NEED HELP NOW!', isUrgent: true, category: 'essential' },
+  'm_macros': { id: 'm_macros', label: 'Macros', icon: 'Zap', output: '', category: 'scaffold' },
+  'm_emoji': { id: 'm_emoji', label: 'Emoji', icon: 'Smile', output: '', category: 'scaffold' },
+  'm_history': { id: 'm_history', label: 'History', icon: 'History', output: '', category: 'scaffold' },
+  'm_abbr': { id: 'm_abbr', label: 'Shorts', icon: 'ZapOff', output: '', category: 'scaffold' },
+  // Emojis (Point 30)
+  'e_smile': { id: 'e_smile', label: '😊', icon: 'Smile', output: '[smiling face]', category: 'social' },
+  'e_laugh': { id: 'e_laugh', label: '😂', icon: 'Laugh', output: '[tears of joy]', category: 'social' },
+  'e_heart': { id: 'e_heart', label: '❤️', icon: 'Heart', output: '[heart]', category: 'social' },
+  'e_thumbs': { id: 'e_thumbs', label: '👍', icon: 'ThumbsUp', output: '[thumbs up]', category: 'social' },
+  'e_clap': { id: 'e_clap', label: '👏', icon: 'Hand', output: '[clapping hands]', category: 'social' },
+  'e_party': { id: 'e_party', label: '🎉', icon: 'PartyPopper', output: '[party popper]', category: 'social' },
+  'e_fire': { id: 'e_fire', label: '🔥', icon: 'Flame', output: '[fire]', category: 'social' },
+  'e_cry': { id: 'e_cry', label: '😢', icon: 'Frown', output: '[crying face]', category: 'social' },
+  'e_angry': { id: 'e_angry', label: '😠', icon: 'Angry', output: '[angry face]', category: 'social' },
+  'e_wave': { id: 'e_wave', label: '👋', icon: 'Hand', output: '[waving hand]', category: 'social' },
 };
 
 export const MODE_CONFIGS: Record<InteractionMode, string[]> = {
@@ -109,13 +125,14 @@ export const MODE_CONFIGS: Record<InteractionMode, string[]> = {
   guided: [
     'yes', 'no', 'help', 'bathroom',
     'water', 'food', 'pain', 'want',
-    'need', 'feel', 'family', 'nurse'
+    'need', 'feel', 'family', 'm_macros'
   ],
   express: [
     'yes', 'no', 'help', 'want',
     'need', 'feel', 'family', 'nurse',
     'food', 'body', 'place', 'action',
-    'now', 'later', 'more'
+    'now', 'later', 'm_macros', 'm_history',
+    'm_abbr'
   ],
   vulgar: [
     'v_bullshit', 'v_moveit', 'v_shut', 'v_dumb',
@@ -125,7 +142,7 @@ export const MODE_CONFIGS: Record<InteractionMode, string[]> = {
   social: [
     's_thanks', 's_joke', 's_love', 's_how',
     's_fine', 's_cool', 's_wait', 's_bye',
-    's_sorry', 'fx_laugh', 'm_not', 'help'
+    's_sorry', 'fx_laugh', 'm_not', 'm_emoji'
   ],
   hospital: [
     'h_nurse', 'h_doctor', 'h_meds', 'h_reposition',
@@ -150,5 +167,6 @@ export const SUBTREES: Record<string, string[]> = {
   'place': ['outside', 'bed', 'chair', 'bathroom', 'modifiers'],
   'action': ['stop', 'more', 'again', 'different', 'rest', 'modifiers'],
   'food': ['food_eat', 'food_drink', 'water', 'food', 'more', 'different', 'modifiers'],
+  'm_emoji': ['e_smile', 'e_laugh', 'e_heart', 'e_thumbs', 'e_clap', 'e_party', 'e_fire', 'e_cry', 'e_angry', 'e_wave'],
   'modifiers': ['m_not', 'm_past', 'm_future', 'm_question', 'q_one', 'q_some', 'q_many', 't_urgent', 't_polite', 't_angry'],
 };

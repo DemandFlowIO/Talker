@@ -83,6 +83,9 @@ export const ConfigPanel: React.FC<ConfigPanelProps> = ({
                     mode="retail" title="Retail" description="Shopping mode." active={currentMode === 'retail'} onClick={() => onModeChange('retail')}
                   />
                   <ModeOption 
+                    mode="crisis" title="Crisis" description="High urgency." active={currentMode === 'crisis'} onClick={() => onModeChange('crisis')}
+                  />
+                  <ModeOption 
                     mode="vulgar" title="Vulgar" description="Unfiltered." active={currentMode === 'vulgar'} onClick={() => onModeChange('vulgar')}
                   />
                 </div>
@@ -118,16 +121,160 @@ export const ConfigPanel: React.FC<ConfigPanelProps> = ({
                     </button>
                   </div>
 
+                  <div className="flex items-center justify-between">
+                    <span className="font-black uppercase text-xs tracking-widest text-[#151619]">Learning Mode (Favorite Cues)</span>
+                    <button 
+                      onClick={() => updateSetting('learningMode', !settings.learningMode)}
+                      className={`w-12 h-6 rounded-full transition-colors relative ${settings.learningMode ? 'bg-blue-500' : 'bg-slate-300'}`}
+                    >
+                      <motion.div 
+                        animate={{ x: settings.learningMode ? 24 : 0 }}
+                        className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full"
+                      />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="font-black uppercase text-xs tracking-widest text-[#151619]">Interface Lockdown</span>
+                    <button 
+                      onClick={() => updateSetting('isLocked', !settings.isLocked)}
+                      className={`w-12 h-6 rounded-full transition-colors relative ${settings.isLocked ? 'bg-red-500' : 'bg-slate-300'}`}
+                    >
+                      <motion.div 
+                        animate={{ x: settings.isLocked ? 24 : 0 }}
+                        className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full"
+                      />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="font-black uppercase text-xs tracking-widest text-[#151619]">Whisper Mode</span>
+                    <button 
+                      onClick={() => updateSetting('whisperMode', !settings.whisperMode)}
+                      className={`w-12 h-6 rounded-full transition-colors relative ${settings.whisperMode ? 'bg-indigo-500' : 'bg-slate-300'}`}
+                    >
+                      <motion.div 
+                        animate={{ x: settings.whisperMode ? 24 : 0 }}
+                        className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full"
+                      />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="font-black uppercase text-xs tracking-widest text-[#151619]">Show Panic Button</span>
+                    <button 
+                      onClick={() => updateSetting('showPanicButton', !settings.showPanicButton)}
+                      className={`w-12 h-6 rounded-full transition-colors relative ${settings.showPanicButton ? 'bg-red-500' : 'bg-slate-300'}`}
+                    >
+                      <motion.div 
+                        animate={{ x: settings.showPanicButton ? 24 : 0 }}
+                        className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full"
+                      />
+                    </button>
+                  </div>
+
+                  <div className="col-span-full">
+                    <div className="flex justify-between mb-4">
+                       <span className="font-black uppercase text-xs tracking-widest text-[#151619]">Theme Accent Color</span>
+                    </div>
+                    <div className="flex gap-3 overflow-x-auto pb-2">
+                       {['#f97316', '#3b82f6', '#10b981', '#f43f5e', '#8b5cf6', '#06b6d4'].map(color => (
+                         <button
+                           key={color}
+                           onClick={() => updateSetting('accentColor', color)}
+                           className={`w-8 h-8 rounded-full border-4 shrink-0 ${settings.accentColor === color ? 'border-white ring-2 ring-slate-400' : 'border-transparent'}`}
+                           style={{ backgroundColor: color }}
+                         />
+                       ))}
+                    </div>
+                  </div>
+
+                  <div className="col-span-full">
+                    <div className="flex justify-between mb-2">
+                       <span className="font-black uppercase text-xs tracking-widest text-[#151619]">Voice Selection</span>
+                    </div>
+                    <select 
+                      value={settings.voiceURI}
+                      onChange={(e) => updateSetting('voiceURI', e.target.value)}
+                      className="w-full bg-slate-200 p-3 rounded-2xl font-mono text-xs font-bold outline-none focus:ring-2 ring-blue-500"
+                    >
+                      <option value="">System Default</option>
+                      {window.speechSynthesis.getVoices().map(voice => (
+                        <option key={voice.voiceURI} value={voice.voiceURI}>
+                          {voice.name} ({voice.lang})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="col-span-full bg-slate-200/50 p-4 rounded-3xl">
+                    <div className="flex justify-between mb-4">
+                       <span className="font-black uppercase text-xs tracking-widest text-[#151619]">Grid Density Selector</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                       {(['sparse', 'standard', 'compact'] as const).map(d => (
+                         <button
+                           key={d}
+                           onClick={() => updateSetting('gridDensity', d)}
+                           className={`py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                             settings.gridDensity === d ? 'bg-[#151619] text-white shadow-lg' : 'bg-white text-slate-400 border-2 border-slate-200'
+                           }`}
+                         >
+                           {d}
+                         </button>
+                       ))}
+                    </div>
+                  </div>
+
                   <div className="col-span-full">
                     <div className="flex justify-between mb-2">
                        <span className="font-black uppercase text-xs tracking-widest text-[#151619]">Hold-to-Activate Delay</span>
                        <span className="font-mono text-xs font-bold text-orange-600">{settings.holdToActivateDelay}ms</span>
                     </div>
                     <input 
-                      type="range" min="0" max="2000" step="250"
+                      type="range" min="0" max="2000" step="100"
                       value={settings.holdToActivateDelay}
                       onChange={(e) => updateSetting('holdToActivateDelay', parseInt(e.target.value))}
                       className="w-full h-3 bg-slate-300 rounded-lg appearance-none cursor-pointer accent-orange-600"
+                    />
+                  </div>
+
+                  <div className="col-span-full">
+                    <div className="flex justify-between mb-2">
+                       <span className="font-black uppercase text-xs tracking-widest text-[#151619]">Dwell-Time Activation (Hover)</span>
+                       <span className="font-mono text-xs font-bold text-red-600">{settings.dwellTime === 0 ? 'OFF' : settings.dwellTime + 'ms'}</span>
+                    </div>
+                    <input 
+                      type="range" min="0" max="3000" step="100"
+                      value={settings.dwellTime}
+                      onChange={(e) => updateSetting('dwellTime', parseInt(e.target.value))}
+                      className="w-full h-3 bg-slate-300 rounded-lg appearance-none cursor-pointer accent-red-600"
+                    />
+                  </div>
+
+                  <div className="col-span-1">
+                    <div className="flex justify-between mb-2">
+                       <span className="font-black uppercase text-[10px] tracking-widest text-[#151619]">Voice Pitch</span>
+                       <span className="font-mono text-xs font-bold text-blue-600">{settings.voicePitch.toFixed(1)}</span>
+                    </div>
+                    <input 
+                      type="range" min="0.5" max="2.0" step="0.1"
+                      value={settings.voicePitch}
+                      onChange={(e) => updateSetting('voicePitch', parseFloat(e.target.value))}
+                      className="w-full h-3 bg-slate-300 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                    />
+                  </div>
+
+                  <div className="col-span-1">
+                    <div className="flex justify-between mb-2">
+                       <span className="font-black uppercase text-[10px] tracking-widest text-[#151619]">Voice Rate</span>
+                       <span className="font-mono text-xs font-bold text-green-600">{settings.voiceRate.toFixed(1)}</span>
+                    </div>
+                    <input 
+                      type="range" min="0.5" max="2.5" step="0.1"
+                      value={settings.voiceRate}
+                      onChange={(e) => updateSetting('voiceRate', parseFloat(e.target.value))}
+                      className="w-full h-3 bg-slate-300 rounded-lg appearance-none cursor-pointer accent-green-600"
                     />
                   </div>
                 </div>

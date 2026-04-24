@@ -11,13 +11,26 @@ import { smoothPhrase } from '../utils';
 export function useCommunication(initialMode: InteractionMode = 'guided') {
   const [state, setState] = useState<SemanticState>(() => {
     const saved = localStorage.getItem('lumina_settings');
-    const defaultSettings = {
+    const savedUsage = localStorage.getItem('lumina_usage');
+    const savedTransitions = localStorage.getItem('lumina_transitions');
+    const savedMacros = localStorage.getItem('lumina_macros');
+    const savedHistory = localStorage.getItem('lumina_phrase_history');
+    const savedAbbr = localStorage.getItem('lumina_abbreviations');
+    const defaultSettings: AccessibilitySettings = {
       hapticsEnabled: true,
       holdToActivateDelay: 0,
       highContrast: false,
       stealthMode: false,
       voicePitch: 1.0,
-      voiceRate: 1.0
+      voiceRate: 1.0,
+      voiceURI: '',
+      gridDensity: 'standard',
+      learningMode: true,
+      isLocked: false,
+      dwellTime: 0,
+      accentColor: '#f97316', // Default orange
+      whisperMode: false,
+      showPanicButton: true
     };
 
     return {
@@ -29,7 +42,15 @@ export function useCommunication(initialMode: InteractionMode = 'guided') {
       isNegated: false,
       isQuestion: false,
       tense: 'present',
-      settings: saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings
+      settings: saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings,
+      usageStats: savedUsage ? JSON.parse(savedUsage) : {},
+      transitionStats: savedTransitions ? JSON.parse(savedTransitions) : {},
+      macros: savedMacros ? JSON.parse(savedMacros) : [],
+      phraseHistory: savedHistory ? JSON.parse(savedHistory) : [],
+      abbreviations: savedAbbr ? JSON.parse(savedAbbr) : [
+        { id: 'abbr_1', short: 'HNP', meaningIds: ['help', 'now', 'place'] },
+        { id: 'abbr_2', short: 'WFN', meaningIds: ['water', 'feel', 'now'] }
+      ]
     };
   });
 
@@ -37,6 +58,26 @@ export function useCommunication(initialMode: InteractionMode = 'guided') {
   useEffect(() => {
     localStorage.setItem('lumina_settings', JSON.stringify(state.settings));
   }, [state.settings]);
+
+  useEffect(() => {
+    localStorage.setItem('lumina_usage', JSON.stringify(state.usageStats));
+  }, [state.usageStats]);
+
+  useEffect(() => {
+    localStorage.setItem('lumina_transitions', JSON.stringify(state.transitionStats));
+  }, [state.transitionStats]);
+
+  useEffect(() => {
+    localStorage.setItem('lumina_macros', JSON.stringify(state.macros));
+  }, [state.macros]);
+
+  useEffect(() => {
+    localStorage.setItem('lumina_phrase_history', JSON.stringify(state.phraseHistory));
+  }, [state.phraseHistory]);
+
+  useEffect(() => {
+    localStorage.setItem('lumina_abbreviations', JSON.stringify(state.abbreviations));
+  }, [state.abbreviations]);
 
   const vibrate = useCallback((pattern: number | number[] = 10) => {
     if (state.settings.hapticsEnabled && 'vibrate' in navigator) {
@@ -77,26 +118,58 @@ export function useCommunication(initialMode: InteractionMode = 'guided') {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(toSpeak);
       
-      if (tone === 'urgent') {
-        utterance.rate = 1.3;
-        utterance.pitch = 1.2;
-      } else if (tone === 'angry') {
-        utterance.rate = 0.8;
-        utterance.pitch = 0.7;
-      } else {
-        utterance.rate = 1.0;
-        utterance.pitch = 1.0;
+      utterance.pitch = state.settings.voicePitch;
+      utterance.rate = state.settings.voiceRate;
+      utterance.volume = state.settings.whisperMode ? 0.3 : 1.0;
+
+      if (state.settings.whisperMode) {
+        utterance.pitch *= 0.8;
+        utterance.rate *= 0.6;
       }
 
+      if (state.settings.voiceURI) {
+        const voices = window.speechSynthesis.getVoices();
+        const selectedVoice = voices.find(v => v.voiceURI === state.settings.voiceURI);
+        if (selectedVoice) {
+          utterance.voice = selectedVoice;
+        }
+      }
+
+      if (tone === 'urgent') {
+        utterance.rate *= 1.3;
+        utterance.pitch *= 1.2;
+      } else if (tone === 'angry') {
+        utterance.rate *= 0.8;
+        utterance.pitch *= 0.7;
+      }
+      
       window.speechSynthesis.speak(utterance);
     }
-  }, []);
+  }, [state.settings.voicePitch, state.settings.voiceRate, state.settings.voiceURI]);
 
   const selectMeaning = useCallback((meaningId: string) => {
     const meaning = MEANINGS[meaningId];
     if (!meaning) return;
 
     vibrate(15);
+
+    // Track usage and transitions (Point 40, 64)
+    setState(prev => {
+      const lastMeaningIdInState = prev.currentPhrase.length > 0 ? prev.currentPhrase[prev.currentPhrase.length - 1].id : 'START';
+      const transitionKey = `${lastMeaningIdInState}->${meaningId}`;
+      
+      return {
+        ...prev,
+        usageStats: {
+          ...prev.usageStats,
+          [meaningId]: (prev.usageStats[meaningId] || 0) + 1
+        },
+        transitionStats: {
+          ...prev.transitionStats,
+          [transitionKey]: (prev.transitionStats[transitionKey] || 0) + 1
+        }
+      };
+    });
 
     // Sentiment Analysis (Point 19) - Repeated selection escalates to urgent
     const lastMeaningId = state.currentPhrase.length > 0 ? state.currentPhrase[state.currentPhrase.length - 1].id : null;
@@ -235,11 +308,56 @@ export function useCommunication(initialMode: InteractionMode = 'guided') {
       isQuestion: state.isQuestion
     });
     speakInternal(toSpeak, state.currentTone);
+
+    if (state.currentPhrase.length > 0) {
+      setState(prev => ({
+        ...prev,
+        phraseHistory: [toSpeak, ...prev.phraseHistory].slice(0, 50)
+      }));
+    }
   }, [state.currentPhrase, state.currentTone, state.tense, state.isQuestion, speakInternal]);
 
   const updateSettings = useCallback((newSettings: AccessibilitySettings) => {
     setState(prev => ({ ...prev, settings: newSettings }));
   }, []);
+
+  const saveMacro = useCallback((label: string) => {
+    if (state.currentPhrase.length === 0) return;
+    const text = smoothPhrase(state.currentPhrase, {
+      tense: state.tense,
+      isQuestion: state.isQuestion
+    });
+    const macro: Macro = {
+      id: `macro_${Date.now()}`,
+      label,
+      output: text,
+      meanings: [...state.currentPhrase]
+    };
+    setState(prev => ({ ...prev, macros: [...prev.macros, macro], currentPhrase: [] }));
+  }, [state.currentPhrase, state.tense, state.isQuestion]);
+
+  const deleteMacro = useCallback((id: string) => {
+    setState(prev => ({ ...prev, macros: prev.macros.filter(m => m.id !== id) }));
+  }, []);
+
+  const selectMacro = useCallback((macro: Macro) => {
+    speakInternal(macro.output, 'polite');
+    vibrate(15);
+  }, [speakInternal, vibrate]);
+
+  const selectHistoryItem = useCallback((text: string) => {
+    speakInternal(text, 'polite');
+    vibrate(15);
+  }, [speakInternal, vibrate]);
+
+  const selectAbbreviation = useCallback((abbr: Abbreviation) => {
+    const meanings = abbr.meaningIds.map(id => MEANINGS[id]).filter(Boolean);
+    setState(prev => ({
+      ...prev,
+      currentPhrase: [...prev.currentPhrase, ...meanings]
+    }));
+    vibrate(20);
+  }, [vibrate]);
 
   return {
     state,
@@ -249,6 +367,11 @@ export function useCommunication(initialMode: InteractionMode = 'guided') {
     clearPhrase,
     setMode,
     updateSettings,
+    saveMacro,
+    deleteMacro,
+    selectMacro,
+    selectHistoryItem,
+    selectAbbreviation,
     currentMeanings: getCurrentMeanings(),
     speak,
     smoothedText: smoothPhrase(state.currentPhrase, {

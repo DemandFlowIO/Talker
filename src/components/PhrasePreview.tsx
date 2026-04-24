@@ -13,13 +13,24 @@ interface PhrasePreviewProps {
   smoothedText: string;
   tone?: string;
   darkMode?: boolean;
+  onClear?: () => void;
+  accentColor?: string;
 }
 
-export const PhrasePreview: React.FC<PhrasePreviewProps> = ({ phrase, smoothedText, tone, darkMode = true }) => {
+export const PhrasePreview: React.FC<PhrasePreviewProps> = ({ phrase, smoothedText, tone, darkMode = true, onClear, accentColor = '#f97316' }) => {
   const hasNegation = phrase.some(m => m.label.startsWith('NOT')) || smoothedText.toLowerCase().includes('not');
 
   return (
-    <div className={`h-12 sm:h-16 rounded-full border-2 flex items-center px-4 sm:px-6 relative transition-all duration-300 ${
+    <motion.div 
+      drag="x"
+      dragConstraints={{ left: 0, right: 0 }}
+      dragElastic={0.2}
+      onDragEnd={(_, info) => {
+        if (info.offset.x < -100) {
+          onClear?.();
+        }
+      }}
+      className={`h-12 sm:h-16 rounded-full border-2 flex items-center px-4 sm:px-6 relative transition-all duration-300 ${
       darkMode 
         ? (hasNegation ? 'bg-red-900/10 border-red-900/30' : 'bg-[#1a1c21] border-white/10') 
         : (hasNegation ? 'bg-red-50 border-red-200' : 'bg-slate-100 border-slate-300')
@@ -65,8 +76,8 @@ export const PhrasePreview: React.FC<PhrasePreviewProps> = ({ phrase, smoothedTe
             {tone}
           </div>
         )}
-        <div className={`w-2 h-2 rounded-full ${phrase.length > 0 ? 'bg-orange-500 animate-pulse shadow-[0_0_8px_rgba(249,115,22,0.8)]' : 'bg-slate-700'}`} />
+        <div className="w-2 h-2 rounded-full" style={phrase.length > 0 ? { backgroundColor: accentColor, boxShadow: `0 0 8px ${accentColor}` } : { backgroundColor: '#334155' }} />
       </div>
-    </div>
+    </motion.div>
   );
 };
